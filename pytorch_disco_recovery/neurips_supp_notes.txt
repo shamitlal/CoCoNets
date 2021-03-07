@@ -1,0 +1,49 @@
+DONE
+
+try occ alone
+figure out if occ*diff helps proposals
+> it does
+>> ok, so the learned diffs are actually better at marking the "change" signature
+
+
+results for transporter
+results for sqair
+
+results for 3d flow
+
+make a plot of results for flow, sqair, transporter, in one of the datasets.
+
+visualize diffs without multiplying by occ; just mult by occrel
+> ok looks fine but this is worse
+
+ablations:
+> lower resolution lowers perf
+> featdiff lowers perf
+> higher resolution improves perf
+
+pseudocode
+
+writeup
+
+table/plot of tracking results
+
+make some nice 5-cell videos, like you made to convince yourself
+
+video of tracking results
+
+
+DOING
+
+
+SOON
+
+make a step-wise reveal of these things, to help the explanation
+
+show objects getting removed one by one
+
+video of scene renders
+
+additional info on the datasets
+
+LATER
+

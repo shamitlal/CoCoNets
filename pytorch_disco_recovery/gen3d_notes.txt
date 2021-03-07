@@ -1,0 +1,362 @@
+DONE
+submit icml rough paper on the topic and get it rejected
+
+think about squishing the vertical dimension to 1
+> one issue might be: this does not tell me how objects or their features are spatially related in a vertical sense. i will never have "cup on top of table" or "chair under desk" in a BEV representation.
+> also, occupancy in BEV is all ones (except behind walls)
+
+there may be a smart bottleneck i can acquire, with an encoder-decoder style architecture WITHOUT skips
+making it work without skips is pretty critical in keeping the bottleneck narrow and generation tractable
+so far i have seen very blurry outputs without skips, but maybe that's unrelated. maybe i can get sharpness if i train long enough, or with some kind of gan for ex.
+but i have not seen an architecture with encoder-decoder which detects at the end, without skips.
+let's try a bottleneck architecture, and optimize for occupancy, even on a single npz, to see if it can eventually fit.
+maybe there are pixelshuffle secrets to transfer here
+> yes, this is great now. i have a 6x6x6 bottleneck and quick decoding into a high-resolution (but clipped) 80x80x80 grid
+
+
+think: maybe you do not need any metric learning here
+> yes this seems correct
+
+train a voxel segmentor
+> read in the seg data
+> get a good vis
+> parse it nicely into 3d
+> add a 3d segnet similar to occnet
+> train it with CE
+< done
+
+think: what do you do if small objects do not emerge? 
+> actually, it may be too early to think about this. the objects will be encouraged to emerge via the detector loss
+< they're here
+
+separate out the decoder part, so that you can later decode the generations
+< done
+
+add a detector
+> i would very much like the detector to output oriented boxes
+> maybe the right way to do this is with a centernet
+> learn the objectness
+> use regular CE since that focal code isn't working
+>> good idea
+> add size estimation
+> add nms and topk, to extract discrete estimates
+> use zero rots, and construct the mem boxes
+> add some pose estimation to the centernet
+>> probably the right way to do this is heading-invariant. we just want to get the principal axes right.
+< done
+
+think: is it better to put a linear layer to extract preds from the features, or just slice out?
+> it's definitely simpler to put a linear layer.
+
+vector-quantize the bottle-necked features
+fix/clean the vq nets (delete "rgb" from their names)
+add a method to speed through the data and dump the dictionaries to disk
+> what needs saving? seems like just ind_memR. easy enough!
+add a method that can load the saved data and train with it
+> this means taking over the go() block, and bypassing the dataloader completely; then just load the data yourself
+
+make an inception metric for this, and evaluate with it
+> realize this idea is flawed
+
+export some high-res inds
+< done
+make a conditional gen model
+< done
+
+
+have a look at the density of the unprojection
+
+directly optimize some vars for a single viewpoint
+
+swap the renderer for some 1x1 one, so that you put more pressure onto the features
+> actually this is not super necessary.
+> actually, ok.
+> how about removing biases?
+> ok done
+
+optimize the vars of a single npz (with many viewpoints
+> you need one latent per npz, but i think you also need then the pose of that latent. maybe its origin_T_camX0?
+>> store some mat
+directly optimize the vars and the dictionary; one voxelgrid per npz
+learn this beautiful voxelgrid, with possibly 1x1x1 convs to get occupancy preds, and of course learn the view renderer
+
+make a list of optimizers, one per zi
+> i think this makes saving/loading pretty tough, doesn't it?
+> ah wait, no, saving/loading is impossible with the saveraloader anyway; i need to do this with npzs
+> make sure you set up an actual list of unique optimizers, instead of just the same optimizer (pointer) repeated
+
+add upnet3d
+
+add a res block after the raw feats
+
+realize that occ slicing will fail if you apply l2 norm/ball
+
+with a parameter-free renderer, there is no lock-and-key option; no cooperation between the feats and viewnet; this may help the feats optimize more quickly
+> try resurrecting rendernet here
+> investigate the issue where we end up painting just some edge of the volume
+> add nerf code and make it work
+< ok looks good
+
+add vq
+
+add npz saving (maybe based on the obj model)
+
+add npz loading
+> see if you can restore the momentum params too
+< done, easy
+
+instead of learning the ML from scratch
+how about regress to imagenet-trained features?
+maybe the features are bad in out-of-distribution images?
+but this would reduce the number of moving parts
+my point here, anyway, is that this kind of viewpred could be sharp (at least, as sharp as the resnet feats), and more distinctive than rgb, and easier to predict than RGB, since it collapses the low-level modes
+> ok, so you have a hypothesis here that convergence to vgg feats should happen faster than convergence to RGB, since there will be less jumping between modes
+> but i think this OOD issue is a serious one
+
+remember: the point here is to generate features on the manifold of possilities, rather than simply the mean of the possibilities.
+
+add the fix jing mentioned
+
+consider that you may get higher-quality assembly if you keep a wider tensor for the object, mask out the bkg, and align it with apply_4x4_to_vox
+> ok i added this
+
+consider that the bottom-up tensor may have FOV effects, yielding a halo around the car
+> resolve this by making a wider but softer crop
+
+see if you can select good box proposals via the holistic match idea
+> make a mode for this
+>> ok, made _propose, as a copy of _compose
+> generate some proposals (by adding noise to the GT) and visualize them
+>> start here with random translation offsets
+< this worked
+
+
+> it seems we need labels for all the objects. no?
+>> let's think why not
+>>> i can at least evaluate the approx accuracy by using the data of the target object
+>>> but this is indeed a bit misleading...
+>> ok let me quickly add the other boxes; it's ok if they are unordered
+< done
+
+generate some proposals using center-surround in occupancy
+> let's go again with _propose mode
+> make some random boxes and show them
+> score them with occupancy CS
+> generate some mAP scores
+< these are terrible
+
+
+please finally do background subtraction (why didn't we do this earlier?)
+> choose an anchor frame, say frame 10 of 20;
+> get features in this coordinate system, for all 20 frames
+> median filter to get the golden background
+>> or something fancier, like gaussian or gmm
+> get boxes from this
+> evaluate this
+>> fix this up so that you only evaluate on inbound boxes
+> try something fancier to find the outliers: store the mean and variance at each voxel
+>> this does not seem better; for one thing, objects cause variance. i need something else, like uncertainty.
+> speed things up, by caching
+> get CS on occupancy, to rescore and improve map
+> re-do CS using the object segments
+>> but this req connlists, which are super expensive at K=64 (1.3g)
+< done, looks good
+
+
+DOING
+
+parameter-free flownet
+> this is not at all what i discussed with katerina
+> already, these features are correspondable across time; i showed that in the ECCV paper
+> i can encourage them to do even better on this, by training with synthetic motions
+>> apply a random RT to the pointcloud
+>> take a random subset of voxel features
+>> CC them with some neighborhood
+>> take the soft argmax of this
+>> train that soft argmax with the true 3d voxel displacement
+>> backprop directly into the features
+isn't this the best thing ever?
+> in earlier attempts, the downside of synthetic motion is that priors learned from this do not transfer to real data
+> but here, the model does not learn any motion priors at all; it only learns correspondable features
+> one downside is that we don't train with real motion
+>> but maybe we do, with multiview data; here, the cc better stay put. this is like local ML.
+>> it's precisely that, in fact, but with a dict of negatives and the loss is directly on the softmax
+
+on train iters do multiview; on val iters do flow
+
+
+> from multiview training, we learn to inpaint partial occlusions, and a kind of global discriminability: each feature should be different from the whole dict
+> from synthetic motion training, we learn a kind of local discriminability: each feature should be different from the neighbors in a search region
+
+
+
+
+
+
+
+
+
+
+
+construct bkg using frames with no objects, to simulate the opportunity of longer surveillance
+
+
+
+
+
+do the thing you emailed
+
+
+dilate the visibility a few voxels, to get the likely-reliable area of the net, where diffs should count
+
+
+
+
+try a parameter-free flownet, to mark the voxels that have moved and where they went
+> first load a good featnet with no border effects
+> throw away frames with no objects in the roi
+> look at feat diffs
+>> ok, i see some objects kind-of
+> get some feature distance stats, so that you know what distance is an outlier
+> visualize statistically small and large diffs
+>> these look pretty great. the small diffs rule out the objects, and the large diffs sometimes have objects
+> train a linear layer to mimic these labels
+> only use labels at voxels that were visible in both frames
+> make it more powerful
+> give it a whole resnet
+< done
+> use occupancy to get your labels: voxels that were occ/free at time0 and got a different label at time1 mean something moved
+>> probably some dilation is necessary here, and maybe even a wider time gap
+> get a test mode happening
+> use centernet-style proposals/nms; this would not yield too many, i think
+> try also thresholding and cs
+> score many angles/sizes with occupancy CS
+> get the most confident box across the entire traj
+
+
+> think:
+> maybe you could train an object segmentation method based on these weak labels
+> if this method has fov 1, then this object interior issue is irrelevant, as long as those voxels do not get labelled as negative
+> ok, can i clean them up a bit more though? let's find the outliers
+
+use proposals from SOMETHING. e.g., some ok-but-not-perfect detector
+or, 2d objectness unprojected and scored
+simplest is a detector train on some small subset of the data
+but it needs to be standalone for me to also render things
+
+
+
+
+
+
+
+
+amodal tracking by: look along the forecasted trajectory; attempt to render at each location; this render score should tell us when we are doing badly vs no-info vs well. matching against the bkg here is critical, and quite unlike the cross corr idea
+
+
+
+
+> for each proposal, attempt to track it
+
+
+generate proposals another way: scene misexplanation score
+
+
+
+
+
+
+
+build a tracker from this
+> how?
+>> first let me optimize a good tensor for the scene. no parameters in viewpred. just the scene
+>> then, let me optimize a good tensor for the object. maybe, for the object, i can and should use the net. for backgrounds, on the other hand, it's cool enough to just save all those points. but if you're doing that, then why not just save the colored points directly? compute a colorized voxelgrid in one shot, and save it. i guess it's because i want some smoothness in the latent space. but really, to obtain that, i should be using a featnet. 
+>> finally, paste the object at its frame0 location, collect viewpred error across the video, and move the object along
+
+v2 of that idea:
+> make a mode for this, called "compose"
+> optimize a feedforward cnn to be able to complete objects and backgrounds
+>> while you do this, eliminate the border effects
+>>> ok done
+> get eccv-style tracker working
+> get eccv-supp-style visualizations happening
+> get 2d rendering happening
+> measure the corr of the 2d and 3d scene diffs to IOU
+> get a GT hypothesis and score it
+>> OK, we don't always select it based on the 3d feature diff, but we usually do
+< done
+> get a const vel hypothesis and score it
+> adjust the intrinsics to render zoomed-in 2d scenes
+> get two additional hypotheses on each step: const vel, and zero vel
+> compose the three scenes
+> score the three hypotheses by matching against the bottom-up feats of the true scene
+
+
+> let me see the bkg of some new scene, from multiple views, so that i can get a nice tensor for it
+
+
+
+
+make a subset of the data that guarantees only ONE moving object, so that the assumption about this is really true 
+
+
+
+
+
+
+
+
+
+
+add a feat3d baseline, trained on the same data
+
+
+
+maybe we are wasting computation by computing features for voxels we will never render
+this may give you the best of both worlds:
+efficiency and ray-based computation from the implicit models, and
+generalization and info usage from the 3d model
+by this i think i mean: generate features in a forward pass, but ONLY at voxels that we want to render. i.e., define some view frustum, fill it in with voxels, then render it.
+
+
+SOON
+
+break ties in the sigen3d ordered gen, to use truly known voxels instead of recently-known
+
+evaluate some topK label accuracy in conditional generation:
+> delete a block of voxels, then inpaint K times, adn evaluate the first error and min_K error 
+
+fix the test-time memory leak
+
+evaluate against a random prior
+
+precompute a million bottleneck feature grids, so that you can train the autoreg prior fast
+
+train the autoregressive prior
+
+
+
+learn an object-factorized generator:
+> first learn background gen, by deleting objects and generating the rest with sparse labels
+> then learn the distribution over object poses, so that at test time you can sample autoregressively from it
+>> is this as simple as it sounds?
+>>> it's a pixelcnn on the latent space of object existence & orientation over the voxelgrid.
+>>> then, at the locations where this is triggered, we run some object generator/deformer. i could easily have a vq space of objects. very easily.
+
+make the sigma object-size-adaptive
+
+
+
+
+LATER
+
+when spconv works on matrix, bring it back: the current arch takes 0.6s sparse, and 0.7s dense
+
+make a point cnn that i can query for locations' features.
+it will take advantage of 3d inductive priors just like my voxel net,
+and yet training and inference will be more efficient, since i only compute features along the rays that i care about
+> what about your idea that a sparse featnet is effectively equivalent to this
+
+
+
+

@@ -1,0 +1,860 @@
+DONE
+get flo mode working again
+
+rewrite the synth flo gen, to generate a pair from a pointcloud, rather than via warp
+> apparently i did this in a past life
+
+rewrite flo mode, so that on train steps you use synth sup, and on val steps you estimate real flow
+> ok synth is happening
+> actually this real flow thing needs to change too
+
+implement a single-frame version:
+> extract an object crop in frame0
+> feed this and the scene to locnet
+> have locnet output the sampling coords
+> get some histograms so you can see what sampling coords are happening
+> set up normalized coordinates for the output space
+>> good, and the features look better nown
+> convert back to real coords, and plot the results
+> switch to a sampling_coords-based loss
+> add rotation to the crops
+>> note that with the voxel-based corrs, it's unnecessary to search over discretized rots for the object
+> add rotation to the estimates
+> vis the located boxes in BEV and perspective
+> fix the annoying logging issue where _e and _g are out of sync
+> add a feature loss
+> split out the samp vs the lrt losses, so that you can apply samp only for the timecycle 
+> add more timesteps
+> add the backward steps too
+> get nice gif summs across the full cycle
+> fix the issue where the rotations are using the camera as origin
+< done < i'm actually skipping the items below here, to focus better on the correspondence issue
+> add search regions, partly to speed things up, and partly for more data variety 
+> add multi-seqlen training, so that you can scale up S without forgetting how to track
+
+get tracking via NN and soft argmaxes and ransac
+> get heatmaps happening
+> get soft argmaxes
+> turn these into reasonable trajectories
+> convert this into an early measurable metric: mean centroid distance across the track
+>> split this into soft and hard versions
+>> quantitatively verify that this goes down across training time
+>> test with smarter soft argmaxes, like an occlusion-aware one < not better
+>> clean up the impl so that no sampling is required
+> turn the argmaxes into motion vectors and feed this to ransac, to obtain an outlier-robust estimate of RT
+
+dynamic cropping
+> maybe vox_util can handle this
+>> at train time, just take whatever crop
+>> at test time, i suppose we need to crop near the object of interest?
+>>> yes, and now how do we get back? maybe the key is to pass this info to the vox_util as a test-time delta
+>> good
+> move to R0 coords at test time
+>> why did i do this again?
+> get back to high perf:
+>> disable the centroid thing
+>> revert
+>>> discover that numerical issues in the soft argmax may be the issue;
+>> return to current, and mult Z*10
+> resolve via max-sub and mult by resolution
+
+check if oord and moco and simclr use the same loss
+> yes
+add this loss
+> done
+
+add a slow net with momentum
+> done
+
+bring back occ loss
+> ok no prob
+
+in the narrow training, don't take pure-random centroids; sample and then check if at least a few points are inbounds
+> done, good
+in the narrow training, add recentering on-the-fly for the test mode
+> done, good
+
+add a classifier for static vs moving, with the help of synthetic augs
+> figure it out:
+>> katerina said to do this with synthetic motion
+>> i'm imagining 1x1x1 conv
+>> swapping features for wrong ones (e.g., by some shuffle) should suffice
+> do it:
+>> add a mode called reject
+>> load a pret net
+>> add rejectnet
+>> make balanced collections of corresponding/noncorresponding data
+>> train rejectnet
+>> visualize its perf on moving data
+< done
+
+set up kitti data
+> find a script that works
+> upload the relevant raw data to aws
+> get the script going
+> inspect
+> realize that the egomotion there might be quite flawed
+> consider that the egomotino data may be cleaner in the odometry benchmark
+> get your training data from the odo bench
+>> find/adapt the odo script
+>> update it to work again
+>> write tfrs
+
+set up tracking eval in kitti
+> load carla-pret features
+> load odo data on train iters, and track data on test iters
+> make ktrack data consec
+> extract trajs from ktrack data
+> fire pret features as a tracker on ktrack data
+> evaluate
+> fix bugs in the eval, to deal with the oddities of kitti data
+
+use different resolutions on train vs test
+> done
+
+
+dense object nets
+> receive rgb0,depth0, rgb1,depth1 as input
+> create feat0, feat1
+> for each point in depth0 that also exists in depth1,
+>> gather up the feat, find its correspondence in feat1, and apply moco
+> add a slow net
+> train a while
+> eval
+>> v1:
+>>> for pixels within the mask, find their 2d neighbors in the next timestep
+>>> gather up the depths at these points;
+>>> unproject those depths
+>> i think v1 is flawed because from step0 we have no mask;
+>> v2:
+>>> for occ voxels on the object,
+>>> get the corresponding 2d features; < this step can be done by unp*occ 
+>>> for each one, get its attention over the next timestep's features, within a bigger box;
+>>> basically run the 3d tracking code, but using unp(feat2d)*occ for 3d features
+> train on kitti and watch tracking results rise
+< done
+
+add/eval a supervised siamese tracker in kitti, with norot
+> first resurrect the carla siamese model
+> add 3d iou eval
+>> replicate shrin's ious
+>>> key is resolution apparently
+> get kitti mode working, in terms of data reading/summs
+>> get siamese tracking train/test into the kitti mode
+< done
+
+change the siamese tracker to use individual voxels, and use a layer to turn this into [R,T], rather than use the entire template and rotate it explicitly
+> find a mode to do this in
+> do it in siamese
+> learn translation first
+>> translationnet
+> learn rotation
+>> consider that you need to output delta rotations
+>> compute the delta rotations
+>> train the model for this, on a small set, to see that when loss is 0, iou is 0.99
+>> train the model for this, on the full set
+< done
+
+add a robustnet, which samples points and does a differentiable svd
+> right now, with a single object, for some reason minimizing the loss does not maximize iou
+>> instead, the box is spinning around a bit
+> maybe it's numerical issues in the soft argmax
+>> are the features normalized?
+>>> yes
+>> are you multiplying by a large value?
+>>> yes
+> maybe it's that the features are bad
+>> add some cotraining on static scenes
+>>> still not great
+how about this:
+i know that from static scenes i can generate pretty great tracking, in the zoom mode
+that is, just from static multiview data, i can learn a good correspondence machine
+clean upgrade to this is:
+same method but use correspondences within dynamic scenes
+THEN, once that works, then i can replace the non-diff rt with a diff one (or even a layer), and gain a marginal improvement
+no that's a bit insane.
+> call it a bad idea
+i think the FC version was fine, though maybe it could benefit from some ransac-style sampling, for stability and a speedup.
+
+i want to generate qualitative results of my best model
+> find that model
+>> i think it's 06_s2_m192x96x192_z48x48x48_1e-4_F3_d64_Ric2_r.1_t1_faks30i1t_faks30i1v_faks30i1v_rule27
+> save its ckpt
+>> done
+> match its settings (solid centroid) and fire it
+>> done
+> get some clean exports
+>> done
+
+make the object crop the same size as the search region, so that the features are fair
+> done
+
+make the data more varied, by rotating along R0 at the outset, maybe when setting the vox util
+> ok
+
+right now, the trajectories are too short. i don't think they will even help me get past occlusions; fix this
+< done
+
+try full-object rot, to see the kind of issues jing is dealing with
+> make a new mode for this, to cleanly work on it
+>> ok made rsiamese
+> run it
+> eliminate non-essential parts
+> make the object placement work properly
+>> E issue related to the object template being the same size as the search region
+>> ok fixed
+> it seems that when the net outputs 15.5 (pure middle), this does not make the search stationary. debug this
+>> fixed by using lrt instead of that weird handcrafted solution
+> add some 5-deg rotation bins and train it
+> put those same bins in test
+> allow test mode to compensate for rotation AND translation
+> with a converged model, definitively figure out the proper rotation direction at test time
+< done
+> parallelize the template rot
+> catch the bug in the rot inference/training (why doesn't it descend?)
+>> catch bug in the gt itself
+>> see if this debugged gt leads to a good box somehow
+>pause on this while you flesh out the pipeline
+
+add matchnet alongside motionregnet < this requires that they share a backbone
+make a new mode where these can train together, and train it quickly
+along the way, fix a critical bug in the test-time tracking
+< done
+
+export subsequences with occlusions
+< done
+
+
+v0 of forecast+match:
+on EVERY FRAME, with WHATEVER ESTIMATES ARE AVAILABLE, fire the forecaster
+run matcher disjoint
+< done
+
+
+the funny thing is:
+the matching is usually quite good under visibility, yet the dotproduct is low.
+so, i think what i want is:
+the dot product should be JUST AS HIGH at the last timestep as in the first timestep.
+or, we need an alt confidence measure...
+the attention, and really any policy, depends on a good measure of confidence.
+> let's acquire this, and measure how well we are doing, by measuring the correlation coeff bettween iou and our estimates
+>> OK, important detail: when the trainval gap is large, this idea is totally flawed, since the model doesn't know what it doesn't know.
+>>> resolve this with an ensemble
+< done
+
+OK
+what i need to see is:
+on this new very long data,
+1) how does tracking alone do?
+< done
+2) how does tracking plus forecasting do?
+< done
+3) how does tracking plus forecasting plus multitemplate do?
+< done
+
+generate vis showing the time-corrected traj across time
+< done
+add timesaving trick by checking if the suggested search region is within a couple voxels of some previous one
+< done
+when the score is high, add another template
+< done
+when the score exceeds the score of a template, swap
+< done
+
+
+
+
+DOING
+
+stabilize things
+
+think big about uncertainty management
+
+add in the detector
+
+
+
+
+solve the appearance non-constancy problem
+> follow the outline i emailed to katerina on 11:59pm april 20
+> first, re-generate some siamese tracking results, and observe the dotprod being low
+> then, the aim is to arrive at high dotprods, i suppose
+> but: i should first verify the issue of: the TRUE dotprod should be high
+> i do worry a little about this dotprod score being my measure of match. i suppose it makes sense, but really i am training it for the soft argmax result, and dotprod is a byproduct.
+> i do also worry about the K answers thing... am i to take the soft argmax of all of them? i suppose that's not bad.
+< ok, i resolved this confidence issue
+> i need some metric that i am going to be increasing by way of this.
+> i think at least PART of the issue i am trying to address is: when the object comes out the other side, i have a harder time tracking it.
+> so, let's regenerate some pipe outputs, and place the new confidence module, and see what gives
+
+
+
+> inspecting qualitatively, i can see that on some examples the initial template is bad (when it's initialized half occluded), and the model does not recover from this
+>> i can fix this with some objectness AND the template update/library i emailed to katerina, so that the model can say "oh i know what you mean". the clean way to do this these days is probably with a centernet.
+>>
+
+
+
+i see two kinds of failures right now:
+1) bad template. this needs a centernet and the attention.
+< this part needs doing
+2) full occlusion. this needs the forecaster and better hypothesis rejection.
+< this part is done
+
+
+
+
+
+
+
+
+
+
+ah, ok, now:
+i can increase M by some factor, by way of the learned transformation dictionary.
+this gives my model the capacity to predict how the template will look in the future
+
+this gives us the capacity to improve over time, as long as the library of length M becomes richer.
+
+but hold on, ideally, the N compressions should get better over time as well, so that selection within M improves.
+how can i achieve this?
+
+
+
+note that the average of the N assembled templates is maybe worse than any individual template.
+
+so then;
+what i really want is to somehow take advantage of the re-localizations of the object, during the selection over M.
+
+note that this is not a matter of maximizing iou; this is actually another coverage problem.
+
+what i want is to output an attention over M past relocs, to get K 
+
+
+
+what i need is a template quality score.
+this module takes a reloc as input, and produces some score value, representing how well this template would branch into N trackable versions.
+i can then take the softmax across M to construct the supertemplate.
+
+
+
+
+
+
+
+
+
+
+
+
+
+it might be cool if the softmax is positional, so that the model can mix-and-match pieces from the M templates
+
+
+
+
+
+
+
+
+
+
+
+
+take more advantage of object-level vars
+
+
+
+
+
+
+
+think about the pruning, enlarging, etc
+
+
+
+
+
+flesh out the pipeline
+> make full traj data, with pointclouds and rgb on every step
+> get the hard/interesting data from this
+> make a mode for the forecast/match combo: how about using mode "pipe"
+> step through a long seq and generate a trajectory on every step; vis this
+> on step0, use gt
+> on step1 and 2, match. from step3 onward, fire the forecaster
+>> actually, make a forecaster that can work with any amount of history, so that this code is easier
+> baseline: on each step>0
+>> fire the forecaster with the available history
+>> at each forecasted location, fire the matcher
+>> take the max-confidence prediction from here as the answer
+>> expect this to fail when the object gets occluded
+> better baseline: on each step>0
+>> fire the forecaster with the available history
+>> at each forecasted location, IF THE LOCATION IS VISIBLE, fire the matcher. else, retain these trajectories
+>> OF THE MATCHES THAT RETURN CONFIDENCE OVER SOME THRESH, take the max-confidence prediction as the answer
+>> expect this to pass through occlusions
+
+v1 of forecast+match:
+on timestep 0, forecast. 
+call each one of those things a hypothesis.
+at each timestep that we forecasted, check visibility
+if the point is visible,
+
+
+for simplicity, how about this:
+on each step, with the available history, fire the forecaster
+at each forecasted location, fire the matcher
+
+
+
+there is a vis i want to see, where we show the hypothesis space changing over time
+during occlusions the forecasting should freeze and we should march along each traj, and check each one
+during good visibility, we should find the object and collapse to a single mode
+
+suppose:
+begin each step with a set of trajectories, and a substep within each traj
+for each hypothesis with good visibility, assuming it doesn't overlap with another hyp, fire the matcher
+if any match returns a high confidence answer, take it as the new location of the object, and update the trajectory, and re-forecast
+else, do not update anything and just step along
+
+
+this means we need:
+
+clists_e: list of trajectories output by the forecaster at some old timestep
+clists_step: step within each traj. note we stay at the same step within ALL trajs
+clists_lrt: the lrt at which we formed the hypotheses < actually, if we store the trajs in R0 coords, we don't need this
+
+past_lrts: high-confidence old lrts of the object
+past_timesteps: timesteps of those lrts (within the larger npz), so that we can retrieve the pointcloud data
+
+
+let's rewrite what we need:
+ah ah ah:
+to stay smart and simple with the bookkeeping, i should make every trajectory COMPLETE in the sense that it has values from 0 to self.S
+
+this means i can pre-allocate these trajectories outside the iterator over S
+
+
+so: each time that i forecast, i need to use the FULL agreed-upon past and these outputs to fill up some K x S x 3 tensor
+this is like having one level of branching, i.e., one version of the past
+
+
+pre-allocate:
+hypothesis_lrts_camR0, shaped B x K x S x 19, representing many long trajectory hypotheses, in R0 coords
+confidences, shaped B x K x S, representing how confident we are in each trajectory
+
+
+when we have definitively matched the object, our confidence should shoot to 1.0, and the past hypotheses should collapse,
+so that hypothesis_lrts_camR0[:,i,:s] should equal hypothesis_lrts_camR0[:,j,:s] for any i,j
+
+in practice this means a certain trajectory "wins", and we collapse the past
+
+
+
+so: i could start with K hypotheses, one being GT, and the others being random,
+and on the very first step, they should trigger the collapse
+every time we collapse, we also fire the forecaster with the last N steps of the hist,
+and this populates the futures with new hypothesis lists
+(a missing function here is: convert_clist_to_lrtlist, via some smoothing and a forward-motion and flat-ground assumption)
+
+
+
+
+see pseudo.py for an implementation. looks pretty good i'd say...
+	
+     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+when the object is nicely visible, i can collapse the hypotheses and have a single location
+when the object seems occluded, i need to maintain my last hypotheses/trajectories 
+
+
+
+
+change the forecaster to predict velocity, or even acceleration, so that producing 0 means "const velocity"
+
+
+
+issue: i need to switch to the forecaster JUST BEFORE it becomes unreliable
+
+
+
+
+on each step>1, enumerate the K options listed by the forecaster;
+check the visibility of those locations
+
+instead of using the last matched position of the object, check the K options provided 
+
+
+
+issue: we should forecast rotation as well, or else infer it from some smoothed traj.
+> current sol: assume rotation does not change
+
+issue: voxel size is different for matching vs forecasting, since we need a wider fov for forecasting, yet we share a backbone
+
+issue: the forecaster should be using a clean aggregated background. it should not be sensitive to momentary occlusions
+
+issue: at test time, the forecaster needs to use an estimated clist_past, rather than gt. this is a distribution shift. i need to train with estims to get over this.
+
+
+add probability/argmin-softmax to the motioncostnet
+
+
+
+issue here:
+> i keep saying that the forecaster will help us reject bad matches, but this is not true right now
+> only the hypothesis tester can do this
+> this is ok; right now i am generating hypotheses and their appearance-based confidences
+> the part after this is the "check" part of predict & check
+> 
+
+
+
+flesh out the pipeline
+> take top5 trajs from the forecaster, and an oracle, and see that you can track through occlusions
+> this means good uncertainty management: when the siamese tracker says i've got it, we trust him
+> preliminary exp:
+>> do the siamese tracker heat peaks correlate well with accuracy?
+>> how about we plot this? dot product result (unnormalized heat) vs iou
+>> looks good
+> get the classifiernet forecaster going
+>> make a mode for this
+
+
+
+> walk along the forecasted trajectory, and fire the matcher at each step
+> when the matcher returns an answer above some thresh, call the hypothesis correct, and prune down
+> when the matcher is not certain maintain the list of hypotheses
+
+fancy step here: reject hypotheses based on DISAGREEING evidence
+so, when evidence agrees with a hypothesis we accept it, and when evidence disagrees with a hypothesis we reject it
+mostly i need to be generating hypotheses. and it doesn't so much matter how.
+once i generate them, then i can rank or reject or whatever
+
+
+retrain the matcher excluding full-occlusion cases
+
+
+
+
+
+
+
+
+
+
+
+
+use yiming's fancy resnet, with padding=0
+
+paralellize the corr across templates somehow, within the corr op itself: each template should give another channel output
+
+
+make the corr visibility-aware
+
+
+make a way to concat extra info to the pointclouds, including rgb and maybe some offset or density stuff
+add rgb concat to the pointclouds
+
+consider a pointnet-style arch, where you get features at any floating-point locations
+
+
+
+
+merge forecaster and siamese full-object
+
+
+
+
+make the test setup more capable for wide rotations, by incrementally rotating the template or at least the new dat
+
+
+
+
+
+
+
+add some ransac-style sampling, for stability and a speedup
+> i think, for this to work, you need some permutation-invariant layer
+> actually, this is unnecessary, as long as you always sample points in some 8-corner configuration
+> so: how about: randomly generate a centroid and lengths, i.e., a fixed-size sampling grid, then cc this and feed it to the layer. you can repeat multiple times in parallel, and take a mean of the outputs
+>> reject samples that have a pt outside the object mask
+> OK
+>> generate some 8-corner samples (i.e., boxes), and visualize them as boxes, in a few axis directions
+
+
+
+
+
+
+add the supervised template updater, as described in
+http://openaccess.thecvf.com/content_ICCV_2019/papers/Zhang_Learning_the_Model_Update_for_Siamese_Trackers_ICCV_2019_paper.pdf
+
+
+
+
+
+
+for the sampling and the cost volumes and so on, try to only sample within the object
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+think about how to use 2d siamese tracking results
+
+
+
+
+
+
+
+
+
+add temporal slowness for the occluded scene
+> for frames up to T-1, take a visibility-weighted average of the content
+> for frame T, if it's visible, use the feat; else, use the weighted avg
+
+
+train on odo, test on track
+> basic version first, and fix the errors that come
+> use different resolution/zooming on train vs test
+> queue up several experiments
+> measure if perf is improving
+>> indeed slightly
+> get a cleaner eval, with noshuf and the true mean across the 1k, and compare your two models (carla vs weak_kitti_10k)
+>> it's close but FT is helping
+> use some heuristics-based rejection strategy
+> improve on carla pret
+< done
+> use a trained rejector net
+
+eliminate freespace in the heatmap; we know these locs have probability 0
+
+
+
+make a baseline based on dense object nets
+
+
+
+try tracking for much longer, like 20 timesteps
+
+try using boosts from t-k
+
+
+
+
+
+
+
+get cleaner traj test from kitti, by using projection into image
+
+
+train at finer vox resolution via zooming
+> take random crops
+>> when i ft from this, it worsens results
+> take random crops which meet some min density
+>> still bad
+>>> maybe this failed because most voxels have little context/interference/distractors
+> only apply loss near the center, where there is lots of context (?)
+
+
+use the rejector to improve tracking perf, by rejecting static data from the matchable set
+
+
+use this classifier to reject data in kitti
+
+repeat featurelearning in kitti
+
+add some slowness to the features, by accumulating nonreject votes
+
+
+
+smarter matching, via context check
+
+smarter zooming, via coarse match at low res
+
+
+add the dynamic zooming into moc test mode
+
+
+
+
+smarter reduce_emb
+
+
+do some kind of smart hungarian matching, so that it's one-to-one. this may reduce spurious matches
+
+
+
+
+try sparse-invariant sparse convolution arch, with dilated convolutions and everything
+> install spconv
+>> figure out where it is
+>> figure out it is incompat
+>> find the updated spconv
+>> install it on aws
+> add in the arch
+> train a while
+> try the middlenet arch < no i don't like this, it compresses the vertical dim
+> add more dilation
+>> (wait for results) < worse
+add density-based reweighting
+< done
+make more of the arch sparse, including that first conv
+make a cleaner or smaller eval set, so that you can see interpretable results faster
+
+
+
+
+allow a certain amount of expansion
+> maybe do a dilation1 3x3x3 spconv after every res block?
+>> no, start by doing one of these after the LAST res block
+
+
+
+
+
+
+figure out if there is something smart you can do temporal propagation wise, with this new flow-less model. or maybe, flow is where that happens.
+
+
+
+
+
+
+
+
+
+
+note that assoc and tracking should be easier in 3D if you limit yourself to occupied voxels. no cars should fly into the air.
+> wow, yes. so tracking in 3d should be almost perfect
+>> this is only if you use the full object for the matching, or, use topK for each voxel in the ransac feed
+
+
+truly double the resolution, by zooming, and maybe account for the spatial mismatch issue
+> note that with highres_bounds (which are narrower), the matching is actualy easier.
+>> *for a cleaner test here, i need a hard narrow mask in the lowres case*
+
+
+
+
+add a compression scheme, where you produce highres features, then have a very quick/coarse downsampling, and apply ML on the downsampled vectors
+
+
+
+
+
+
+add VFE layer
+> this requires 
+
+
+
+
+i feel like i have two broad options:
+> use sparsity-aware sparse convolutions with a minimal amount of expansion (basically a custom arch), at super high res
+>> this sounds cool 
+> use sparsity-aware convolutions with the current resolution, trying to inpaint everywhere
+>> this sounds cool too, but does not help my resolution hypothesis
+
+
+
+
+
+add layer normalization to replace BN
+
+
+use linear warmup and cosine decay for the lr
+
+
+maybe there's something good about the copy/paste loss, in the sense that as long as voxels from the same object land in place, things are OK
+
+
+
+
+
+
+
+
+
+
+
+
+SOON
+
+
+
+figure out the notes you shifted to "LATER"
+
+
+
+LATER
+
+
+
+rewrite the flo process itself, as unsupervised blob tracking with cycle consistency
+> does this need trilinear sampling in the grid?, or can i implement this with a revoxelization?
+>> i want to use the cropped stuff in a loss, to pass into the crop parameters; this means the crop needs to be differentiable. this means i need trilinear resampling
+>>> but then do i need to featurize the full-resolution tensor every time?
+>>>> yes certainly
+
+>> also, for training, you need to featurize the object's crop. this is very similar to to the memory-efficient setup you made for siamese mode
+
+
+
+> get rid of Xs, so that everything is localized to X0 and code/implementation is simpler
+
+
+add a flow-like eval for this, with nearest neighbors 
+
+
+
+from the box_e in each frame, get the depth point closest to the box’s centroid
+unproject that point to 3d;
+on do this also for box0_g, and then calculate the delta that takes us from box g

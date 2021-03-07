@@ -1,0 +1,14 @@
+trainer_ml_2 - agpu
+trainer_ml_2_again (cont of above) - fgpu
+trainer_ml_occ_2 - bgpu
+trainer_implicit_2, trainer_implicit_2_again  - cgpu
+trainer_implicit_lr3_2 - dgpu
+trainer_implicit_delta_2 - egpu
+trainer_implicit_hyper_2 - hgpu
+trainer_implicit_occ_1 - ggpu
+
+# tsdf on carla
+
+trainer_implicit_carla_lr4_1 - agpu
+trainer_implicit_carla_lr3_1 - bgpu
+trainer_implicit_carla_5lr4_1 - cgpu

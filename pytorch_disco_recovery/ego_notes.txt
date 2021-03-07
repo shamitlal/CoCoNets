@@ -1,0 +1,85 @@
+DONE
+
+get carla_ego mode going, by copying from neural_3d_mapping
+
+play with hyps to speed it up
+
+get plots that prove things are working in carla
+
+get kitti_ego mode going
+
+write new kodo data, with longer trajs
+
+add basic test mode
+
+add proper part loading
+
+add kodo to consec set
+
+make long-seq testing/plotting within tb
+
+add quantitative measurement for test: endpoint error
+
+get synth motion on train iters
+
+set up param-free egonet
+
+make single-scale soft argmax
+
+make even longer npzs; maybe 500 frames
+> some loading problem
+> try 100 frames
+>> ok
+
+shift the param-free egonet into matchnet.py
+
+eliminate the phantom points around 0,0,0
+
+add a second iteration (at test time)
+> i think this is only necessary if we start oob; since the model is unaware of accumulated error here, i think it does not make sense (yet)
+
+make a map
+> chain pointclouds together with the estimated egomotion, and re-vox and re-feat
+> aggregate everything into the camI sys
+> make a good vis of this
+>> _e and _g
+>> and _diff
+
+add a coarse/wide scale, to help make use of the agg
+> ok but how do i combine this? maybe estimate coarse, then use this as ans, then estimate wide
+
+get comparable outputs from orbslam
+> i can use the outputs from seqs 09 and 10, for the first 100 frames
+> to get more, i need to run orbslam2 myself, which i do not have time for today
+
+
+DOING
+
+get bev epe
+
+
+SOON
+
+add cc with other rotation directions
+
+use a visibility-aware median, instead of just everything
+
+experiment cleanly with:
+> relu
+> normalization
+> two steps
+> resolution
+
+use resnet and take crops into account
+
+add custom small-npz loading strategy for test time (ignoring the data loader)
+
+use sparse-invar arch
+
+LATER
+
+make plot/table for katerina
+
+read orbslam
+
+install orbslam and get its outputs

@@ -1,0 +1,215 @@
+DONE
+
+transfer progress from intphys_data repo
+add on-the-fly data loader from intphys raw
+add logvis to summ_oneds
+add box parsing
+add box vis
+fix the bug in box parsing
+add logvis to summ_oned
+vis the boxes on the depth images
+train detnet
+check raquel's paper to see how she does forecasting, maybe better/simpler than nick
+> it is, but she gives up the ability to learn the trajectory generator
+determine if the fix for occluders also handles the edge cases for other objects
+> no, and there remains some subtle issue
+
+create a 3d r2p2 net
+> start with intphys_det mode
+> clean it out
+> get things working for S=5
+>> upgrade the data loader to handle S>1
+>> simplify the forecast model to assume the camera is stationary
+>> update feat and occ to work with S>1
+>> try sparse convs and standard arch, to see the mem savings < very good here
+>> get a setup which runs quickly, for dev
+> compute and vis 3d trajectories for the objects
+> figure out that the verlet thing in r2p2 is totally inapplicable
+> figure out that you need at least 2 timesteps input for prinet
+> add a prinet shell
+> add a non-obj-centric prinet, which just makes sure the given trajs have high likelihood
+> add an obj-centric version of prinet, which grabs a crop_and_resize in the feat tensor and then proceeds to produce costs
+>> but adam: obj-centric vs not does not make a difference if prinet is just a 1x1 conv
+>>> but that's a bit wrong; we need it to make a difference, because we want object-specific prior maps
+>>> note that what we really want here is freespace on each step. so maybe i can just use the output of occnet here. occnet minus the object, i guess.
+>>>> but not quite. we are supposed to predict which locations will BECOME free.n
+>>>>> but i can supervise that too, you know. that might actually be perfect. the only issue is you lose the probabilistic interpretation
+>> conc: let's not do this right now. i have a scene-centric prinet; let's see if i can learn a forward model
+> add a forward model (rponet)
+>> drop this
+< done
+
+get all the trajectories from the dataset into some nice data structure
+> figure out you need to do this in the intphys_data repo
+< done
+> get one
+> vis it
+> get some
+> vis them
+> get all
+> vis them
+< done
+
+think about whether the forecaster also needs T timesteps, or just 1, or 2
+> i think not T, since we can always re-plan. but 2 is good. really, 1+flow is best
+
+learn a good cost-based forecaster
+> set up a net that produces T cost volumes given 2 consecutive feats
+> load the gt and vis it
+> load the traj library, sample some using the right stride, and vis them
+> sample from the cost vols, using the lib and actual trajs
+> add first part of loss: c_hat and c_i
+> add second part of loss: d_i
+> descend on one ex
+> vis the top2 argmin trajs 
+> discover and fix the issue of OOB trajs scoring well
+>> i think i can accomplish this via clipping the trajs before sampling into the vol
+>>> yes
+> simplify the model so that you only need to worry about one object/gt per step 
+> change the sampling strategy: for each gt, sample N from a list sorted by the first two locs
+> provide past traj as an input
+> only show top/bot 3 for a single guy, so that the vis makes sense
+> aug the lib a bit, with scaling
+> descend on full dataset
+
+time profiling
+> done. way worth it.
+4gpu training, for speed
+> skip, since it's fast now
+
+add an l2 measure
+
+exclude data where the object starts oob
+
+add an "obj-centric" version, where we take crops instead of feed the path
+> figure out the actual cropping
+> vis it
+> resolve resolution issues
+
+add a regression-based version, instead of cost vols
+
+only aply loss if the object is visible in frame0
+
+implement invariance to trajectory yaw
+> compute yaw from the first two steps, and use this to rotate the input nicely
+
+rebalance the data
+> cluster it
+> plot the frequencies
+> plot the clusters
+> use this info to rebalance the text file
+
+check that the new forecast data has finished; rerun the best thing on this, for 200k with B8
+
+make a vis that shows many trajs in a single image
+make an object-centric forecaster
+> reformat the traj library to use a starting position and angle
+get rid of R coords, since we cannot really use them
+add box visibility computation, and use it to rescore boxes
+
+DOING
+
+follow notes on the board
+current task:
+> gt traj, estim det, trainset, eval raymatch
+
+
+
+
+flesh out the test time behavior; evaluate on the test data
+> try it on train data first
+>> make an intphys test mode
+>> start with gt dets and gt forecasts
+>> implement the ray-based visibility estimator
+>> 
+>> load pret det and forecast
+>> see 
+> write the test data to npzs
+>
+
+
+add some kind of 3d feature dist, so that you can judge if the re-det object is indeed the same
+
+extend each ray by some amount, so that visibility enters the centroids
+> an approx to this is: shift the z values forward a bit
+
+add detection as an aux task for the forecaster: encode each timestep and then merge them
+
+
+add random scaling in [0.9,1.1] as data aug, if i still have a trainval gap
+
+generate a video of the detection results, to get a better feel for the accuracy
+
+use xyz_mem inbounds as another visibility cue while writing, to waste less time at traintime
+
+add obj-centric data augs
+
+add scene-centric data augs
+
+add noise to the centers, so that the input is not perfect
+> this in such a way that the velocity gt still aims toward a perfect next step
+
+consider excluding data where the object sits still
+
+add softmax classif version (find the 1k clusters and classify against them
+
+clean up the set of trajectories by throwing away similar ones
+
+make two separate calls to the sampler; one for loss (with small N), and one for test/vis (with large N)
+> what sampler are you talking about?
+
+
+SOON
+
+simplify the rgb data, by replacing each pixel with the mean color of its seg mask
+compute stats of objects' positions
+compute stats of objects' motions
+add that fancy perspective dropout method you made for carla
+fix the issue where mAP fails with tall boxes
+add 3d data aug, to close the trainval gap (assuming there is one)
+add input dropout to better train the occnet
+collect stats on obj positions in cam coords
+figure out what the data means by "object" vs "occluder"
+
+
+
+LATER
+
+separate pretrained_nets_intphys from pretrained_nets_carla
+
+figure out why some scenes have faulty gt
+> e.g., /data/intphys/train/12844;
+>> the cube lands on the ground and stops according to depth, but takes a few more spins according to obj labels
+
+train a 2.5d net to look at the object and decide how deep the ray should go there. (take depth as input if you like.) basically predict local object scale)
+
+
+investigate if there is some depth detail i need to account for, like it's not z but actually raydist
+
+
+
+
+
+
+
+plan:
+
+
+detect the objects
+
+
+if the obj is always visible:
+trakc, forecast, compare the two.
+
+
+if the object is occasinoally occluded,
+do a masked mean of the compares,
+where the mask comes from visibliity
+
+no need to track the walls, let's say.
+
+note you need to track for 3 frames before you can forecast
+
+try to get a near-gt detector
+maybe tracking can be done basically by iou
+
