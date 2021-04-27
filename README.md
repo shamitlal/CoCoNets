@@ -1,6 +1,7 @@
-# 3CNets
+# CoCoNets: Continuous Contrastive 3D Scene Representations
 
-This repository contains the code release for: **Continuous Convolutional Contrastive 3D Scene Representations for ViewPredictive Self-supervised Visual Feature Learning (CVPR 2021)**.
+** (Code in progress) **
+This repository contains the code that accompanies our CVPR 2021 paper [CoCoNets: Continuous Contrastive 3D Scene Representations](https://mihirp1998.github.io/project_pages/coconets/)
 
 ## pytorch_disco
 This repository contains the code for all our models. 
