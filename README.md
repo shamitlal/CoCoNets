@@ -4,8 +4,6 @@
 This repository contains the code that accompanies our CVPR 2021 paper [CoCoNets: Continuous Contrastive 3D Scene Representations](https://mihirp1998.github.io/project_pages/coconets/)
 
 <img src="vis.gif">
-## pytorch_disco
-This repository contains the code for all our models. 
 
 ### Installation
 First you have to make sure that you have all dependencies in place. The simplest way to do so, is to use anaconda.
