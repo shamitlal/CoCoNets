@@ -3,7 +3,7 @@
 ** (Code in progress) **
 This repository contains the code that accompanies our CVPR 2021 paper [CoCoNets: Continuous Contrastive 3D Scene Representations](https://mihirp1998.github.io/project_pages/coconets/)
 
-<img src="Readme_images/apps.gif">
+<img src="vis.gif">
 ## pytorch_disco
 This repository contains the code for all our models. 
 
