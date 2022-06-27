@@ -12,9 +12,14 @@ First you have to make sure that you have all dependencies in place. The simples
 `conda env create -f environment.yaml`
 `conda activate pdisco`
 
-### Dataset ###
-#### Use pre rendered dataset ####
-We strongly recommend to use the pre-rendered dataset. This dataset can be donwloaded from [here](https://drive.google.com/file/d/14danQIUYmZ-R3Gy3rRe9xiuAVDbgoEqD/view?usp=sharing). It is around 20GBs. Download and extract it in ``pytorch_disco`` repository. 
+### Dataset and checkpoints ###
+
+You can find the CARLA and Kitti dataset, along with the pretrained checkpoints  [here](https://drive.google.com/drive/u/1/folders/1mLk837YmNAF0rfiUyDSrzInfNXL4kN6n). 
+
+After extracting the dataset edit the ``dataset_location`` variable in exp_base.py Line 22 
+<!-- It is around 20GBs. Download and extract it in ``pytorch_disco`` repository.  -->
+
+
 
 ### Multiview Training ###
 Checkpoints will be saved in ``pytorch_disco/checkpoints`` directory. 
