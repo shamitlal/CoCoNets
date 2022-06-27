@@ -15,16 +15,11 @@ from nets.occnet import OccNet
 from nets.rendernet import RenderNet
 from nets.rgbnet import RgbNet
 from nets.localdecodernet import LocalDecoderParent
-from pointnet.pointnet2 import Pointnet2
-# from nets.mocnet import MocNet
-# from nets.viewnet import ViewNet
-# from nets.mocnet3D import MocNet3D
+
 
 from tensorboardX import SummaryWriter
 import torch.nn.functional as F
 from torch import distributions as dist
-# from utils_moc import MocTrainer
-# from utils_basic import *
 import utils.vox
 import utils.samp
 import utils.geom
