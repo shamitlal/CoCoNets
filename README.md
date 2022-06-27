@@ -17,6 +17,7 @@ First you have to make sure that you have all dependencies in place. The simples
 You can find the CARLA and Kitti dataset, along with the pretrained checkpoints  [here](https://drive.google.com/drive/u/1/folders/1mLk837YmNAF0rfiUyDSrzInfNXL4kN6n). 
 
 After extracting the dataset edit the ``dataset_location`` variable [here](https://github.com/shamitlal/CoCoNets/blob/581b616b5a89dae05233c8cf036e77ee5b88fd97/pytorch_disco_recovery/exp_base.py#L22) 
+
 <!-- It is around 20GBs. Download and extract it in ``pytorch_disco`` repository.  -->
 
 
