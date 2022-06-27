@@ -17,7 +17,9 @@ if "matrix" in hostname:
     else:
         home_dataset_location = "/home/shamitl/datasets/carla/processed/npzs"
 else:
-    dataset_location = "/media/mihir/dataset/carla/npzs"
+    # dataset_location = "/media/mihir/dataset/carla/npzs"
+
+    dataset_location = "/home/mihirpd_google_com/datasets/coconets/processed/npzs"
     home_dataset_location = dataset_location
 
 
