@@ -1,0 +1,148 @@
+[
+    {
+        "frames": [
+            {
+                "timestamp": 0.0,
+                "num": 0,
+                "class": "frame",
+                "hypotheses": [
+                    {
+                        "height": 1.15,
+                        "width": 0.80,
+                        "id": "XXX",
+                        "y": 1.68,
+                        "x": 2.92
+                    }
+                ]
+            },
+            {
+                "timestamp": 1.0,
+                "num": 1,
+                "class": "frame",
+                "hypotheses": [
+                    {
+                        "height": 1.27,
+                        "width": 0.83,
+                        "id": "XXX",
+                        "y": 1.54,
+                        "x": 2.97
+                    }
+                ]
+            },
+            {
+                "timestamp": 2.0,
+                "num": 2,
+                "class": "frame",
+                "hypotheses": [
+                    {
+                        "height": 1.55,
+                        "width": 0.90,
+                        "id": "XXX",
+                        "y": 1.65,
+                        "x": 2.94
+                    }
+                ]
+            },
+            {
+                "timestamp": 3.0,
+                "num": 3,
+                "class": "frame",
+                "hypotheses": [
+                    {
+                        "height": 1.74,
+                        "width": 1.01,
+                        "id": "XXX",
+                        "y": 1.76,
+                        "x": 3.32
+                    }
+                ]
+            },
+            {
+                "timestamp": 4.0,
+                "num": 4,
+                "class": "frame",
+                "hypotheses": [
+                    {
+                        "height": 1.82,
+                        "width": 1.16,
+                        "id": "XXX",
+                        "y": 1.62,
+                        "x": 3.42
+                    }
+                ]
+            },
+            {
+                "timestamp": 5.0,
+                "num": 5,
+                "class": "frame",
+                "hypotheses": [
+                    {
+                        "height": 1.92,
+                        "width": 1.33,
+                        "id": "XXX",
+                        "y": 1.59,
+                        "x": 3.77
+                    }
+                ]
+            },
+            {
+                "timestamp": 6.0,
+                "num": 6,
+                "class": "frame",
+                "hypotheses": [
+                    {
+                        "height": 2.33,
+                        "width": 1.61,
+                        "id": "XXX",
+                        "y": 1.74,
+                        "x": 4.00
+                    }
+                ]
+            },
+            {
+                "timestamp": 7.0,
+                "num": 7,
+                "class": "frame",
+                "hypotheses": [
+                    {
+                        "height": 2.68,
+                        "width": 1.74,
+                        "id": "XXX",
+                        "y": 1.52,
+                        "x": 4.09
+                    }
+                ]
+            },
+            {
+                "timestamp": 8.0,
+                "num": 8,
+                "class": "frame",
+                "hypotheses": [
+                    {
+                        "height": 2.42,
+                        "width": 2.26,
+                        "id": "XXX",
+                        "y": 1.64,
+                        "x": 4.64
+                    }
+                ]
+            },
+            {
+                "timestamp": 9.0,
+                "num": 9,
+                "class": "frame",
+                "hypotheses": [
+                    {
+                        "height": 2.74,
+                        "width": 2.75,
+                        "id": "XXX",
+                        "y": 1.43,
+                        "x": 5.02
+                    }
+                ]
+            }
+        ],
+        "class": "video",
+        "filename": "000001"
+    }
+]

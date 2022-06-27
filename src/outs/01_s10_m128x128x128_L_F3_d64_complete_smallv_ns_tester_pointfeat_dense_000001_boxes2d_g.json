@@ -1,0 +1,158 @@
+[
+    {
+        "frames": [
+            {
+                "timestamp": 0.0,
+                "num": 0,
+                "class": "frame",
+                "annotations": [
+                    {
+                        "dco": true,
+                        "height": 1.15,
+                        "width": 0.80,
+                        "id": "XXX",
+                        "y": 1.68,
+                        "x": 2.92
+                    }
+                ]
+            },
+            {
+                "timestamp": 1.0,
+                "num": 1,
+                "class": "frame",
+                "annotations": [
+                    {
+                        "dco": true,
+                        "height": 1.24,
+                        "width": 0.89,
+                        "id": "XXX",
+                        "y": 1.68,
+                        "x": 3.06
+                    }
+                ]
+            },
+            {
+                "timestamp": 2.0,
+                "num": 2,
+                "class": "frame",
+                "annotations": [
+                    {
+                        "dco": true,
+                        "height": 1.35,
+                        "width": 0.99,
+                        "id": "XXX",
+                        "y": 1.69,
+                        "x": 3.22
+                    }
+                ]
+            },
+            {
+                "timestamp": 3.0,
+                "num": 3,
+                "class": "frame",
+                "annotations": [
+                    {
+                        "dco": true,
+                        "height": 1.48,
+                        "width": 1.12,
+                        "id": "XXX",
+                        "y": 1.70,
+                        "x": 3.41
+                    }
+                ]
+            },
+            {
+                "timestamp": 4.0,
+                "num": 4,
+                "class": "frame",
+                "annotations": [
+                    {
+                        "dco": true,
+                        "height": 1.64,
+                        "width": 1.29,
+                        "id": "XXX",
+                        "y": 1.71,
+                        "x": 3.64
+                    }
+                ]
+            },
+            {
+                "timestamp": 5.0,
+                "num": 5,
+                "class": "frame",
+                "annotations": [
+                    {
+                        "dco": true,
+                        "height": 1.84,
+                        "width": 1.50,
+                        "id": "XXX",
+                        "y": 1.73,
+                        "x": 3.91
+                    }
+                ]
+            },
+            {
+                "timestamp": 6.0,
+                "num": 6,
+                "class": "frame",
+                "annotations": [
+                    {
+                        "dco": true,
+                        "height": 2.10,
+                        "width": 1.78,
+                        "id": "XXX",
+                        "y": 1.74,
+                        "x": 4.25
+                    }
+                ]
+            },
+            {
+                "timestamp": 7.0,
+                "num": 7,
+                "class": "frame",
+                "annotations": [
+                    {
+                        "dco": true,
+                        "height": 2.45,
+                        "width": 2.21,
+                        "id": "XXX",
+                        "y": 1.76,
+                        "x": 4.70
+                    }
+                ]
+            },
+            {
+                "timestamp": 8.0,
+                "num": 8,
+                "class": "frame",
+                "annotations": [
+                    {
+                        "dco": true,
+                        "height": 2.95,
+                        "width": 2.95,
+                        "id": "XXX",
+                        "y": 1.78,
+                        "x": 5.35
+                    }
+                ]
+            },
+            {
+                "timestamp": 9.0,
+                "num": 9,
+                "class": "frame",
+                "annotations": [
+                    {
+                        "dco": true,
+                        "height": 3.68,
+                        "width": 4.13,
+                        "id": "XXX",
+                        "y": 1.80,
+                        "x": 6.29
+                    }
+                ]
+            }
+        ],
+        "class": "video",
+        "filename": "000001"
+    }
+]
