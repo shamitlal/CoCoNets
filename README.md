@@ -6,10 +6,11 @@ This repository contains the code that accompanies our CVPR 2021 paper [CoCoNets
 <img src="vis.gif">
 
 ### Installation
-First you have to make sure that you have all dependencies in place. The simplest way to do so, is to use pip install.
+First you have to make sure that you have all dependencies in place. The simplest way to do so, is by running the following command:
 
 `pip install -r requirements.txt`
 
+For our implmentation we use `torch==1.12.1+cu113` and  `torchvision==0.13.1+cu113`, although feel free to use your favorite version.
 
 ### Dataset and checkpoints ###
 
@@ -17,7 +18,7 @@ You can find the CARLA and Kitti dataset, along with the pretrained checkpoints 
 
 For instance download, the CARLA dataset zip file from [here](https://drive.google.com/file/d/1aySBNPNmDZ0mG6bYUj_SKUxFKeyyzpeD/view?usp=sharing)
 
-After extracting the dataset edit the ``dataset_location`` variable [here](https://github.com/shamitlal/CoCoNets/blob/581b616b5a89dae05233c8cf036e77ee5b88fd97/pytorch_disco_recovery/exp_base.py#L21) 
+Further extract the dataset zip and then edit the ``dataset_location`` variable [here](https://github.com/shamitlal/CoCoNets/blob/581b616b5a89dae05233c8cf036e77ee5b88fd97/pytorch_disco_recovery/exp_base.py#L21) 
 
 <!-- It is around 20GBs. Download and extract it in ``pytorch_disco`` repository.  -->
 
