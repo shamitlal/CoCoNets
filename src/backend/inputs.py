@@ -1,6 +1,6 @@
 # import tensorflow as tf
 import numpy as np
-import scipy
+# import scipy
 import torch
 import pickle
 from torch.utils.data import DataLoader
@@ -11,7 +11,7 @@ import random
 import utils.geom
 random.seed(0)
 from backend import readers
-import os, json, random, imageio
+import os, json, random
 import utils.improc
 import ipdb
 import time 

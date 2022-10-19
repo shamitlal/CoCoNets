@@ -8,7 +8,6 @@ import numpy as np
 from matplotlib import cm
 import hyperparams as hyp
 import matplotlib
-import imageio
 from itertools import combinations
 from tensorboardX import SummaryWriter
 from sklearn.decomposition import PCA

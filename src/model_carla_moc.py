@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import hyperparams as hyp
 import numpy as np
-import imageio,scipy
-from sklearn.cluster import KMeans
+# import imageio,scipy
+# from sklearn.cluster import KMeans
 from backend import saverloader, inputs
 
 from model_base import Model

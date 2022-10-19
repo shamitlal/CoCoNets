@@ -1,7 +1,6 @@
 import glob, math
 import numpy as np
-from scipy import misc
-from scipy import linalg
+
 EPS = 1e-6
 
 XMIN = -5.0 # right (neg is left)
