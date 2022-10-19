@@ -7,6 +7,7 @@ This repository contains the code that accompanies our CVPR 2021 paper [CoCoNets
 
 ### Installation
 First you have to make sure that you have all dependencies in place. The simplest way to do so, is to use pip install.
+
 `pip install -r requirements.txt`
 
 
